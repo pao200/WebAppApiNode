@@ -75,74 +75,74 @@ jobs:
   # 3. DESPLIEGUE AUTOMÁTICO EN AWS EC2
   # =========================================================
   deploy:
-    name: Desplegar en AWS EC2
-    runs-on: ubuntu-latest
+  name: Desplegar en AWS EC2
+  runs-on: ubuntu-latest
 
-    needs: docker
+  needs: docker
 
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
-    steps:
-      - name: Conectar a EC2 y desplegar
-        uses: appleboy/ssh-action@v1.2.5
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
+  steps:
+    - name: Conectar a EC2 y desplegar
+      uses: appleboy/ssh-action@v1.2.5
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
 
-          script: |
-            set -e
+        script: |
+          set -e
 
-            IMAGE="pao1606/webapp-api-node:latest"
-            CONTAINER="webapp-api-node"
+          IMAGE="pao1606/webapp-api-node:latest"
+          CONTAINER="webapp-api-node"
 
-            echo "=========================================="
-            echo "DESCARGANDO IMAGEN DESDE DOCKER HUB"
-            echo "=========================================="
+          echo "=========================================="
+          echo "DESCARGANDO IMAGEN DESDE DOCKER HUB"
+          echo "=========================================="
 
-            docker pull "$IMAGE"
-
-
-            echo "=========================================="
-            echo "ELIMINANDO CONTENEDOR ANTERIOR"
-            echo "=========================================="
-
-            docker rm -f "$CONTAINER" 2>/dev/null || true
+          sudo docker pull "$IMAGE"
 
 
-            echo "=========================================="
-            echo "INICIANDO NUEVA VERSION"
-            echo "=========================================="
+          echo "=========================================="
+          echo "ELIMINANDO CONTENEDOR ANTERIOR"
+          echo "=========================================="
 
-            docker run -d \
-              --name "$CONTAINER" \
-              --restart unless-stopped \
-              -p 80:80 \
-              "$IMAGE"
+          sudo docker rm -f "$CONTAINER" 2>/dev/null || true
 
 
-            echo "=========================================="
-            echo "ESPERANDO INICIO DE LA API"
-            echo "=========================================="
+          echo "=========================================="
+          echo "INICIANDO NUEVA VERSION"
+          echo "=========================================="
 
-            sleep 5
-
-
-            echo "=========================================="
-            echo "COMPROBANDO API REST"
-            echo "=========================================="
-
-            curl -f http://127.0.0.1/ || exit 1
+          sudo docker run -d \
+            --name "$CONTAINER" \
+            --restart unless-stopped \
+            -p 80:80 \
+            "$IMAGE"
 
 
-            echo "=========================================="
-            echo "CONTENEDOR ACTIVO"
-            echo "=========================================="
+          echo "=========================================="
+          echo "ESPERANDO INICIO DE LA API"
+          echo "=========================================="
 
-            docker ps --filter "name=$CONTAINER"
+          sleep 5
 
 
-            echo "=========================================="
-            echo "DESPLIEGUE FINALIZADO CORRECTAMENTE"
-            echo "=========================================="
+          echo "=========================================="
+          echo "COMPROBANDO API REST"
+          echo "=========================================="
+
+          curl -f http://127.0.0.1/ || exit 1
+
+
+          echo "=========================================="
+          echo "CONTENEDOR ACTIVO"
+          echo "=========================================="
+
+          sudo docker ps --filter "name=$CONTAINER"
+
+
+          echo "=========================================="
+          echo "DESPLIEGUE FINALIZADO CORRECTAMENTE"
+          echo "=========================================="
