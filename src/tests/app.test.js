@@ -10,7 +10,7 @@ describe("Pruebas generales de la API", () => {
     expect(response.body).toEqual({
       statusCode: 200,
       data: {
-        message: "WebApp API funcionando correctamente"
+        message: "WebApp API actualizada mediante CI/CD"
       }
     });
   });
