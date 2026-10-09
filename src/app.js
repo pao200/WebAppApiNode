@@ -15,7 +15,7 @@ app.get("/", (req, res) => {
   res.status(200).json({
     statusCode: 200,
     data: {
-      message: "WebApp API funcionando correctamente"
+      message: "WebApp API actualizada mediante CI/CD"
     }
   });
 });
