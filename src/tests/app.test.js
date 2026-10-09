@@ -14,4 +14,18 @@ describe("Pruebas generales de la API", () => {
       }
     });
   });
+
+  test("GET /api/health debe indicar que la API está funcionando", async () => {
+    const response = await request(app).get("/api/health");
+
+    expect(response.statusCode).toBe(200);
+
+    expect(response.body).toEqual({
+      statusCode: 200,
+      data: {
+        status: "OK",
+        message: "API funcionando correctamente"
+      }
+    });
+  });
 });
