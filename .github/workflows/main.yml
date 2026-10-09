@@ -10,6 +10,10 @@ on:
       - main
 
 jobs:
+
+  # =========================================================
+  # 1. PRUEBAS Y COBERTURA
+  # =========================================================
   test:
     name: Pruebas y cobertura
     runs-on: ubuntu-latest
@@ -30,12 +34,18 @@ jobs:
       - name: Ejecutar pruebas y cobertura
         run: npm run test:coverage
 
+
+  # =========================================================
+  # 2. CONSTRUIR Y PUBLICAR IMAGEN EN DOCKER HUB
+  # =========================================================
   docker:
     name: Construir y publicar imagen Docker
     runs-on: ubuntu-latest
+
     needs: test
 
-    # Solo publicar imagen cuando sea push a main
+    # Docker solo se publica cuando hacemos push a main.
+    # Un pull_request únicamente ejecuta las pruebas.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
@@ -51,7 +61,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Construir y publicar imagen
+      - name: Construir y publicar imagen Docker
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -59,3 +69,80 @@ jobs:
           tags: |
             pao1606/webapp-api-node:latest
             pao1606/webapp-api-node:${{ github.sha }}
+
+
+  # =========================================================
+  # 3. DESPLIEGUE AUTOMÁTICO EN AWS EC2
+  # =========================================================
+  deploy:
+    name: Desplegar en AWS EC2
+    runs-on: ubuntu-latest
+
+    needs: docker
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Conectar a EC2 y desplegar
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+
+          script: |
+            set -e
+
+            IMAGE="pao1606/webapp-api-node:latest"
+            CONTAINER="webapp-api-node"
+
+            echo "=========================================="
+            echo "DESCARGANDO IMAGEN DESDE DOCKER HUB"
+            echo "=========================================="
+
+            docker pull "$IMAGE"
+
+
+            echo "=========================================="
+            echo "ELIMINANDO CONTENEDOR ANTERIOR"
+            echo "=========================================="
+
+            docker rm -f "$CONTAINER" 2>/dev/null || true
+
+
+            echo "=========================================="
+            echo "INICIANDO NUEVA VERSION"
+            echo "=========================================="
+
+            docker run -d \
+              --name "$CONTAINER" \
+              --restart unless-stopped \
+              -p 80:80 \
+              "$IMAGE"
+
+
+            echo "=========================================="
+            echo "ESPERANDO INICIO DE LA API"
+            echo "=========================================="
+
+            sleep 5
+
+
+            echo "=========================================="
+            echo "COMPROBANDO API REST"
+            echo "=========================================="
+
+            curl -f http://127.0.0.1/ || exit 1
+
+
+            echo "=========================================="
+            echo "CONTENEDOR ACTIVO"
+            echo "=========================================="
+
+            docker ps --filter "name=$CONTAINER"
+
+
+            echo "=========================================="
+            echo "DESPLIEGUE FINALIZADO CORRECTAMENTE"
+            echo "=========================================="
