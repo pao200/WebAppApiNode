@@ -20,13 +20,13 @@ app.get("/", (req, res) => {
   });
 });
 
-// Health Check
+
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     statusCode: 200,
     data: {
       status: "OK",
-      message: "API funcionando correctamente"
+      message: "API funcionando correctamente mediante CI/CD"
     }
   });
 });
