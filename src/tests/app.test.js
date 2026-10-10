@@ -24,7 +24,7 @@ describe("Pruebas generales de la API", () => {
       statusCode: 200,
       data: {
         status: "OK",
-        message: "hola"
+        message: "API funcionando correctamente mediante CI/CD 2"
       }
     });
   });
